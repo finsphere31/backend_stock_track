@@ -236,12 +236,13 @@ app.get('/api/data/sync', authenticateUser, (req, res) => {
     });
 });
 
-// POST /api/data/sync - Bulk push state to the user's isolated database
+// POST /api/data/sync - Safe bulk sync
 app.post('/api/data/sync', authenticateUser, (req, res) => {
     const db = req.userDb;
     const { products, transactions, org_name, report_header } = req.body;
 
     const syncTx = db.transaction(() => {
+        // Only replace products if an array was explicitly provided
         if (Array.isArray(products)) {
             db.exec('DELETE FROM products');
             const insertProd = db.prepare(`
@@ -259,6 +260,7 @@ app.post('/api/data/sync', authenticateUser, (req, res) => {
             }
         }
 
+        // Only replace transactions if an array was explicitly provided
         if (Array.isArray(transactions)) {
             db.exec('DELETE FROM transactions');
             const insertTx = db.prepare(`
