@@ -1,0 +1,3230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>StockTrack - Inventory Management</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="StockTrack">
+    <meta name="theme-color" content="#ffffff">
+
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2953/2953363.png">
+
+    <script>
+    (function () {
+        const manifest = {
+            name: "StockTrack - Inventory Management",
+            short_name: "StockTrack",
+            start_url: "./",
+            scope: "./",
+            display: "standalone",
+            background_color: "#f8fafc",
+            theme_color: "#ffffff",
+            icons: [
+                {
+                    src: "https://cdn-icons-png.flaticon.com/512/2953/2953363.png",
+                    sizes: "512x512",
+                    type: "image/png",
+                    purpose: "any maskable"
+                }
+            ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.createElement("link");
+        manifestLink.rel = "manifest";
+        manifestLink.href = manifestURL;
+        document.head.appendChild(manifestLink);
+    })();
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #f8fafc;
+            color: #0f172a;
+            -webkit-text-size-adjust: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .app-header {
+            background: #ffffff;
+            color: #0f172a;
+            padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+        }
+        .app-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand-icon-box {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 900;
+            font-size: 16px;
+        }
+        .app-header .brand {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: -0.4px;
+            color: #0f172a;
+            cursor: pointer;
+        }
+
+        .user-avatar-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 3px 8px 3px 4px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .user-avatar-pill img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .user-avatar-pill span {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .app-screen-section {
+            width: 100%;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
+
+        .hero-banner-card {
+            margin: 10px 0 12px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #075985 100%);
+            border-radius: 15px;
+            padding: 18px;
+            color: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 5px;
+        }
+        .hero-greeting {
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 3px;
+        }
+        .hero-subtitle {
+            font-size: 11.5px;
+            opacity: 0.9;
+        }
+        .hero-month-pill {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hero-balance-box {
+            background: rgba(15, 23, 42, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 14px;
+        }
+        .hero-bal-label {
+            font-size: 11px;
+            font-weight: 700;
+            opacity: 0.85;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 4px;
+        }
+        .hero-bal-label::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            background: #38bdf8;
+            border-radius: 50%;
+        }
+        .hero-bal-val-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .hero-bal-amount {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .summary-section-wrap {
+            margin: 0 0 12px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+        }
+        .summary-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .summary-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .view-all-link {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #0284c7;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .img-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .modern-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 68px;
+        }
+        .modern-box-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modern-box-label {
+            font-size: 9px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        .modern-box-val {
+            font-size: 12.5px;
+            font-weight: 900;
+            margin: 2px 0 1px;
+        }
+        .modern-box-sub {
+            font-size: 8px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .box-bal { border-left: 3px solid #0284c7; }
+        .box-bal .modern-box-val { color: #0284c7; }
+        .box-inc { border-left: 3px solid #10b981; }
+        .box-inc .modern-box-val { color: #10b981; }
+        .box-exp { border-left: 3px solid #ef4444; }
+        .box-exp .modern-box-val { color: #ef4444; }
+
+        .twin-action-row {
+            margin: 0 0 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .twin-cta-btn {
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: none;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 11.5px;
+            font-weight: 800;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+        .twin-cta-sync { background: linear-gradient(135deg, #059669, #047857); }
+        .twin-cta-open { background: linear-gradient(135deg, #0284c7, #0369a1); }
+
+        .dashboard-lower-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+            align-items: stretch;
+        }
+        .lower-card-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .lower-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .lower-card-title {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .reminder-badge {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #d97706;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .view-more-btn {
+            background: none;
+            border: none;
+            color: #0284c7;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 0 0;
+            text-align: left;
+        }
+
+        .recent-tx-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .recent-tx-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .recent-tx-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .tx-inc-bg { background: #d1fae5; color: #059669; }
+        .tx-exp-bg { background: #fee2e2; color: #dc2626; }
+        .recent-tx-title { font-size: 11px; font-weight: 700; color: #1e293b; }
+        .recent-tx-sub { font-size: 9px; color: #94a3b8; }
+        .recent-tx-amt { font-size: 11.5px; font-weight: 800; }
+
+        .bottom-app-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(54px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10000;
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            flex: 1;
+            height: 100%;
+        }
+        .bottom-nav-item.active { color: #0284c7; }
+        .bottom-nav-item span.icon { font-size: 16px; }
+
+        .sheet-container {
+            background: #ffffff;
+            padding: 0 14px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 8px 0;
+        }
+
+        .sticky-section-header {
+            position: sticky;
+            top: var(--header-h, calc(52px + env(safe-area-inset-top, 0px)));
+            z-index: 100;
+            background: #ffffff;
+            padding: 14px 0 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 10px;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+        }
+        .sticky-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .section-search-input {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            background: #f8fafc;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .section-search-input:focus {
+            border-color: #0284c7;
+            background: #ffffff;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 54vh;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 7px 8px;
+            text-align: left;
+            font-size: 12.5px;
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 700;
+            color: #475569;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .num { text-align: right; }
+
+        .action-btn {
+            background: #fee2e2;
+            color: #ef4444;
+            border: 1px solid #fecaca;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background: #e0f2fe;
+            color: #0284c7;
+            border: 1px solid #bae6fd;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 10px;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        .tx-btn {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 10px;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        .tx-btn-minus {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 10px;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        .add-row-btn {
+            padding: 8px 14px;
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .mobile-card-list {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+            max-height: calc(100vh - 210px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .mobile-card-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .mobile-card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .table-scroll { display: none; }
+            .mobile-card-list { display: flex; }
+            #reportTableScroll, #statementTableScroll {
+                display: block !important;
+                max-height: 58vh;
+            }
+        }
+
+        .table-scroll tbody tr.clickable-row {
+            cursor: pointer;
+        }
+        .table-scroll tbody tr.clickable-row:hover,
+        .table-scroll tbody tr.clickable-row:active {
+            background: #eff6ff;
+        }
+
+        .filter-box {
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1 1 140px;
+        }
+        .filter-group label {
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #475569;
+        }
+        .filter-box select,
+        .filter-box input {
+            border: 1px solid #cbd5e1;
+            padding: 6px;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 12px;
+        }
+
+        .autocomplete-floating-menu {
+            position: absolute;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            max-height: 160px;
+            overflow-y: auto;
+            z-index: 9999999;
+            display: none;
+            min-width: 160px;
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #1e293b;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .autocomplete-item:hover {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(3px);
+            z-index: 999999;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+        }
+        .modal-box {
+            background: #ffffff;
+            border-radius: 14px;
+            max-width: 380px;
+            width: 100%;
+            padding: 18px;
+            text-align: center;
+            position: relative;
+            z-index: 1000000;
+        }
+        .modal-box h4 {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 10px;
+        }
+        .modal-input-field {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            padding: 9px 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            outline: none;
+            background: #f8fafc;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .modal-btn {
+            padding: 9px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .modal-save-btn { background: #0284c7; color: #fff; width: 100%; }
+        .modal-cancel-btn { background: #e2e8f0; color: #334155; }
+        .modal-del-btn { background: #fee2e2; color: #ef4444; }
+
+        #fintrack-toast {
+            position: fixed;
+            top: calc(12px + env(safe-area-inset-top, 0px));
+            left: 50%;
+            transform: translateX(-50%) translateY(-120px);
+            z-index: 99999999;
+            min-width: 260px;
+            max-width: 90vw;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+        #fintrack-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #fintrack-toast.success { background: #059669; }
+        #fintrack-toast.error { background: #dc2626; }
+
+        #auth-screen-container {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at top, #0369a1, #0f172a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            padding: 16px;
+        }
+        .fintrack-card {
+            background: #ffffff;
+            border-radius: 18px;
+            width: 100%;
+            max-width: 350px;
+            padding: 26px 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .fintrack-card h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 3px;
+        }
+        .fintrack-card p.subtitle {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 18px;
+        }
+        .fintrack-input-group {
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .fintrack-input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13.5px;
+            background: #f8fafc;
+            outline: none;
+        }
+        .fintrack-btn {
+            width: 100%;
+            padding: 11px;
+            background: #0284c7;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .fintrack-card-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            font-size: 12px;
+        }
+        .fintrack-card-footer a {
+            color: #0284c7;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .report-stat-chip {
+            display: inline-block;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #475569;
+            margin-left: 6px;
+        }
+        .report-summary-bar {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 10px;
+        }
+        .report-summary-item {
+            font-size: 11px;
+            font-weight: 600;
+            color: #334155;
+        }
+        .report-summary-item span {
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .report-empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: #94a3b8;
+        }
+        .report-empty-state .big-icon {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .report-empty-state h5 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        .report-empty-state p { font-size: 12px; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .status-badge.in { background: #d1fae5; color: #059669; }
+        .status-badge.out { background: #fee2e2; color: #dc2626; }
+
+        .supplier-tag {
+            background: #e0f2fe;
+            color: #0284c7;
+            padding: 1px 8px;
+            border-radius: 8px;
+            font-size: 9.5px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .reports-menu-header {
+            display: flex;
+            align-items: center;
+            padding-top: 4px;
+        }
+        .reports-menu-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .report-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .report-tab-pill {
+            flex: 0 0 auto;
+            padding: 9px 16px;
+            border-radius: 20px;
+            border: 1.5px solid #e2e8f0;
+            background: #ffffff;
+            color: #334155;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .report-tab-pill.active {
+            border-color: #0284c7;
+            color: #0284c7;
+            background: #eff6ff;
+        }
+
+        .report-menu-list {
+            padding: 14px !important;
+        }
+        .report-menu-category-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 10px;
+        }
+        .report-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 2px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+        }
+        .report-menu-item:last-child { border-bottom: none; }
+        .report-menu-icon {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            border-radius: 10px;
+            background: #e0f2fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+        }
+        .report-menu-text { flex: 1; min-width: 0; }
+        .report-menu-item-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .report-menu-item-sub {
+            font-size: 10.5px;
+            color: #94a3b8;
+            margin-top: 1px;
+        }
+        .report-menu-chevron {
+            font-size: 16px;
+            color: #94a3b8;
+            flex: 0 0 auto;
+        }
+
+        .report-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .report-back-btn {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .report-detail-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .report-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        .report-header-name-input {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #0f172a;
+            background: #f8fafc;
+            outline: none;
+            flex: 1 1 200px;
+            min-width: 0;
+        }
+        .report-header-name-input:focus { border-color: #0284c7; background: #fff; }
+        .report-pdf-btn {
+            padding: 8px 14px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 11.5px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        #reportPdfRenderArea {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 780px;
+            background: #ffffff;
+            padding: 20px;
+        }
+        #reportPdfRenderArea .pdf-title {
+            font-size: 18px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+        #reportPdfRenderArea .pdf-subtitle {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 14px;
+        }
+
+        #desktopSidebar { display: none; }
+
+        @media (min-width: 900px) {
+            #desktopSidebar {
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 232px;
+                background: linear-gradient(180deg, #eef3f9 0%, #e6edf5 55%, #dfe7f0 100%);
+                border-right: 1px solid #d8e2ec;
+                z-index: 2000;
+                padding: 18px 14px;
+            }
+            #desktopSidebar .sidebar-brand-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 0 6px 18px;
+                margin-bottom: 8px;
+                border-bottom: 1px solid #d8e2ec;
+            }
+            #desktopSidebar .sidebar-brand-row .brand-icon-box {
+                width: 36px;
+                height: 36px;
+                font-size: 17px;
+            }
+            #desktopSidebar .sidebar-brand-title {
+                font-size: 19px;
+                font-weight: 900;
+                letter-spacing: -0.4px;
+                color: #0f172a;
+            }
+            #desktopSidebar .sidebar-nav-group {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                flex: 1;
+            }
+            #desktopSidebar .sidebar-nav-label {
+                font-size: 10.5px;
+                font-weight: 800;
+                color: #94a3b8;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                padding: 10px 10px 4px;
+            }
+            .side-nav-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                width: 100%;
+                padding: 10px 12px;
+                border-radius: 10px;
+                border: none;
+                background: none;
+                color: #475569;
+                font-size: 13.5px;
+                font-weight: 700;
+                cursor: pointer;
+                text-align: left;
+            }
+            .side-nav-item .icon {
+                font-size: 17px;
+                width: 22px;
+                flex: 0 0 22px;
+                text-align: center;
+            }
+            .side-nav-item:hover {
+                background: rgba(255, 255, 255, 0.65);
+                color: #0f172a;
+            }
+            .side-nav-item.active {
+                background: #ffffff;
+                color: #0284c7;
+                box-shadow: 0 1px 4px rgba(2, 132, 199, 0.15);
+            }
+
+            body.app-logged-in { padding-bottom: 0; }
+            body.app-logged-in #main-app-content { margin-left: 232px; }
+            body.app-logged-in .app-header {
+                padding-left: 24px;
+                padding-right: 24px;
+                background: linear-gradient(180deg, #eef3f9 0%, #e6edf5 100%);
+                border-bottom: 1px solid #d8e2ec;
+            }
+            body.app-logged-in .user-avatar-pill {
+                background: rgba(255, 255, 255, 0.7);
+                border: 1px solid #d8e2ec;
+                margin-left: auto;
+            }
+            body.app-logged-in .app-header-left { display: none; }
+            body.app-logged-in .bottom-app-bar { display: none; }
+            body.app-logged-in .app-screen-section { max-width: 1400px; padding: 0 24px; }
+            body.app-logged-in .sheet-container { padding: 0 20px 20px; }
+            body.app-logged-in .sticky-section-header { top: 0; }
+            body.app-logged-in .hero-greeting { font-size: 20px; }
+            body.app-logged-in .hero-subtitle { font-size: 13px; }
+            body.app-logged-in .hero-bal-amount { font-size: 30px; }
+            body.app-logged-in .summary-title,
+            body.app-logged-in .lower-card-title,
+            body.app-logged-in .reports-menu-title { font-size: 15px; }
+            body.app-logged-in .img-metrics-grid { gap: 14px; }
+            body.app-logged-in .modern-box { min-height: 84px; padding: 14px; }
+            body.app-logged-in .modern-box-val { font-size: 17px; }
+            body.app-logged-in .modern-box-label { font-size: 10.5px; }
+            body.app-logged-in .dashboard-lower-grid { gap: 16px; }
+            body.app-logged-in .lower-card-box { padding: 18px; }
+            body.app-logged-in th, body.app-logged-in td { font-size: 13.5px; padding: 10px 12px; }
+            body.app-logged-in .add-row-btn, body.app-logged-in .report-pdf-btn { padding: 10px 18px; font-size: 12.5px; }
+            body.app-logged-in .report-menu-item-title { font-size: 14.5px; }
+        }
+
+        @media (min-width: 768px) {
+            .app-screen-section { zoom: 0.98; }
+            .hero-banner-card { margin-top: 2px; margin-bottom: 2px; }
+        }
+
+        .twin-cta-sync .sync-status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-left: 4px;
+            background: #a7f3d0;
+        }
+        .twin-cta-sync .sync-status-dot.pending { background: #fde68a; }
+        .twin-cta-sync .sync-status-dot.error { background: #fecaca; }
+    </style>
+</head>
+<body>
+
+<nav id="desktopSidebar">
+    <div class="sidebar-brand-row">
+        <div class="brand-icon-box">S</div>
+        <div class="sidebar-brand-title">StockTrack</div>
+    </div>
+    <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">Menu</div>
+        <button class="side-nav-item active" id="sideNav-dashboard" onclick="switchSection('dashboard')"><span class="icon">🏠</span><span>Dashboard</span></button>
+        <button class="side-nav-item" id="sideNav-transaction" onclick="switchSection('transaction')"><span class="icon">📑</span><span>Transaction</span></button>
+        <button class="side-nav-item" id="sideNav-inventory" onclick="switchSection('inventory')"><span class="icon">📦</span><span>Inventory</span></button>
+        <button class="side-nav-item" id="sideNav-reports" onclick="switchSection('reports')"><span class="icon">📈</span><span>Reports</span></button>
+        <button class="side-nav-item" id="sideNav-settings" onclick="switchSection('settings')"><span class="icon">⚙️</span><span>Settings</span></button>
+    </div>    
+</nav>
+
+<div id="liveAutocompleteMenu" class="autocomplete-floating-menu"></div>
+
+<div id="fintrack-toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-msg">Notification</span>
+</div>
+
+<div id="auth-screen-container">
+    <div class="fintrack-card">
+        <h1 id="authTitle">StockTrack</h1>
+        <p class="subtitle" id="authSubtitle">Please Login</p>
+
+        <div class="fintrack-input-group">
+            <input type="text" id="loginUsername" placeholder="Username">
+        </div>
+        <div class="fintrack-input-group" id="pinInputGroup" style="display: none;">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="userRecoveryPin" placeholder="4-Digit Recovery PIN">
+        </div>
+        <div class="fintrack-input-group" style="position:relative;">
+            <input type="password" id="loginPassword" placeholder="Password (min 6 chars)" style="padding-right:38px;">
+            <button type="button" onclick="togglePasswordVisibility('loginPassword', this)" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:15px; padding:4px 6px; line-height:1;" title="Show/Hide password">👁️</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:6px; margin:2px 0 12px; text-align:left;">
+            <input type="checkbox" id="rememberMeCheck" style="width:15px; height:15px; cursor:pointer;">
+            <label for="rememberMeCheck" style="font-size:11.5px; color:#64748b; font-weight:600; cursor:pointer;">Remember my username</label>
+        </div>
+
+        <button class="fintrack-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Login</button>
+
+        <div class="fintrack-card-footer">
+            <a onclick="openForgotModal()">Forgot Password?</a>
+            <a id="authModeToggleLink" onclick="toggleAuthModeView()">Register</a>
+        </div>
+    </div>
+</div>
+
+<div id="main-app-content" style="display:none;">
+    <header class="app-header">
+        <div class="app-header-left">
+            <div class="brand-icon-box">S</div>
+            <div class="brand" id="appBrandTitle">StockTrack</div>
+        </div>
+        <div class="user-avatar-pill" onclick="promptSimpleLogout()" title="Logout">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar">
+            <span id="currentUserNameLabel">User</span>
+            <span style="font-weight: 800; color: #ef4444; margin-left: 2px; font-size: 11px;">Logout</span>
+        </div>
+    </header>
+
+    <div id="dashboard-section" class="app-screen-section">
+        <div class="hero-banner-card">
+            <div class="hero-top-row">
+                <div>
+                    <div class="hero-greeting">Welcome, <span id="heroUserName">User</span> 👋</div>
+                    <div class="hero-subtitle">Inventory & Stock Control Overview</div>
+                </div>
+                <div class="hero-month-pill">📅 Live Stats</div>
+            </div>
+            <div class="hero-balance-box">
+                <div class="hero-bal-label">Total Inventory Units Stock</div>
+                <div class="hero-bal-val-row">
+                    <div class="hero-bal-amount" id="heroTotalStock">0 Units</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboardReminderContainer"></div>
+
+        <div class="summary-section-wrap">
+            <div class="summary-header-row">
+                <span class="summary-title">Stock Summary Metrics</span>
+                <a class="view-all-link" onclick="switchSection('transaction')">View Inventory</a>
+            </div>
+            <div class="img-metrics-grid">
+                <div class="modern-box box-bal">
+                    <div class="modern-box-top"><span class="modern-box-label">Products</span><span>📦</span></div>
+                    <div class="modern-box-val" id="dashTotalProducts">0</div>
+                    <div class="modern-box-sub">Catalog Items</div>
+                </div>
+                <div class="modern-box box-inc">
+                    <div class="modern-box-top"><span class="modern-box-label">Purchased</span><span>📈</span></div>
+                    <div class="modern-box-val" id="dashTotalIn">0</div>
+                    <div class="modern-box-sub">Total Units In</div>
+                </div>
+                <div class="modern-box box-exp">
+                    <div class="modern-box-top"><span class="modern-box-label">Sold</span><span>📉</span></div>
+                    <div class="modern-box-val" id="dashTotalOut">0</div>
+                    <div class="modern-box-sub">Total Units Out</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="twin-action-row">
+            <button class="twin-cta-btn twin-cta-sync" onclick="syncWithBackend(true)">
+                💾 Sync SQLite<span class="sync-status-dot" id="syncStatusDot" title="Sync status"></span>
+            </button>
+            <button class="twin-cta-btn twin-cta-open" onclick="switchSection('transaction')">📑 Open Sheet →</button>
+        </div>
+
+        <div class="dashboard-lower-grid">
+            <div class="lower-card-box">
+                <div class="lower-card-header"><span class="lower-card-title">Low Stock Alert</span></div>
+                <div id="dashLowStockList" style="font-size:11.5px; color:#64748b;">All items sufficiently stocked</div>
+            </div>
+            <div class="lower-card-box">
+                <div class="lower-card-header"><span class="lower-card-title">Recent Activity</span></div>
+                <div id="recentTransactionsList" style="font-size:11px; color:#94a3b8;">No movements logged</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="transaction-section" class="app-screen-section" style="display:none;">
+        <div class="sheet-container">
+            <div class="sticky-section-header">
+                <div class="sticky-header-row">
+                    <h4 style="font-size:14px; font-weight:800;">Transaction Log</h4>
+                    <button class="add-row-btn" onclick="openTxModal()">+ Add Transaction</button>
+                </div>
+                <input type="text" id="txFilterSearchInput" class="section-search-input" placeholder="🔍 Search by product, party, or description..." oninput="renderTransactions()">
+            </div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product Name</th>
+                            <th>Type</th>
+                            <th class="num">Quantity</th>
+                            <th>Description</th>
+                            <th style="width: 15%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txTableBody"></tbody>
+                </table>
+            </div>
+            <div class="mobile-card-list" id="txMobileCardList"></div>
+        </div>
+    </div>
+
+    <div id="inventory-section" class="app-screen-section" style="display:none;">
+        <div class="sheet-container">
+            <div class="sticky-section-header">
+                <div class="sticky-header-row">
+                    <h4 style="font-size:14px; font-weight:800;">Product Catalog & Stock</h4>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+                        <input type="file" id="csvImportInput" accept=".csv" style="display:none;" onchange="handleImportCSVFile(this)">
+                        <button class="add-row-btn" style="background:#f1f5f9; color:#334155; border:1px solid #e2e8f0;" onclick="document.getElementById('csvImportInput').click()">⬆️ Import CSV</button>
+                        <button class="add-row-btn" style="background:#f1f5f9; color:#334155; border:1px solid #e2e8f0;" onclick="exportProductsCSV()">⬇️ Export CSV</button>
+                        <button class="add-row-btn" onclick="openInventoryModal()">+ Add Product</button>
+                    </div>
+                </div>
+                <input type="text" id="invFilterSearchInput" class="section-search-input" placeholder="🔍 Search product or supplier..." oninput="renderInventory()">
+            </div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Supplier</th>
+                            <th class="num">Available Stock</th>
+                            <th>Reminder Date</th>
+                            <th>Threshold</th>
+                            <th style="width: 28%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody"></tbody>
+                </table>
+            </div>
+            <div class="mobile-card-list" id="inventoryMobileCardList"></div>
+        </div>
+    </div>
+
+    <div id="ledger-section" class="app-screen-section" style="display:none; padding:0 10px;">
+        <div id="reportsMenuView">
+            <div class="reports-menu-header">
+                <span class="reports-menu-title">📊 View Reports</span>
+            </div>
+            <p style="font-size:11px; color:#64748b; margin:2px 0 12px;">Pick a report to view, filter, and export</p>
+            <div class="report-tabs" id="reportTabsRow"></div>
+            <div class="report-menu-list sheet-container" id="reportMenuList" style="margin-top:10px;"></div>
+        </div>
+
+        <div id="reportDetailView" class="sheet-container" style="display:none;">
+            <div class="report-detail-header">
+                <button class="report-back-btn" onclick="backToReportsMenu()">← Back</button>
+                <span class="report-detail-title" id="reportDetailTitle">Report</span>
+            </div>
+            <div class="report-header-bar">
+                <input type="text" id="reportHeaderNameInput" class="report-header-name-input" placeholder="Report / Company Header Name" oninput="saveReportHeaderName()">
+                <button class="report-pdf-btn" onclick="downloadReportPDF()">⬇️ Download PDF</button>
+            </div>
+            <div class="filter-box">
+                <input type="hidden" id="reportTypeSelect" value="stockledger">
+                <div class="filter-group" id="reportProductFilterGroup">
+                    <label>Select Stock / Product:</label>
+                    <select id="reportProductSelect" onchange="renderActiveReport()">
+                        <option value="ALL">-- All Products --</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="reportSupplierFilterGroup" style="display:none;">
+                    <label>Select Supplier:</label>
+                    <select id="reportSupplierSelect" onchange="renderActiveReport()">
+                        <option value="ALL">-- All Suppliers --</option>
+                    </select>
+                </div>
+            </div>
+            <div id="reportSummaryChips" class="report-summary-bar" style="display:none;"></div>
+            <div class="table-scroll" id="reportTableScroll">
+                <table>
+                    <thead id="reportTableHead"></thead>
+                    <tbody id="ledgerDetailBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="productStatementView" class="sheet-container" style="display:none;">
+            <div class="report-detail-header">
+                <button class="report-back-btn" onclick="closeProductStatement()">← Back</button>
+                <span class="report-detail-title" id="statementProductTitle">Product Statement</span>
+            </div>
+            <div id="statementSummaryChips" class="report-summary-bar" style="display:flex;"></div>
+            <div class="table-scroll" id="statementTableScroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th class="num" style="color:#059669;">Purchase (+)</th>
+                            <th class="num" style="color:#dc2626;">Sales (-)</th>
+                            <th class="num">Balance</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statementTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportPdfRenderArea"></div>
+
+    <div id="settings-section" class="app-screen-section sheet-container" style="display:none;">
+        <h3 style="margin-bottom: 10px; font-size: 14px; font-weight:800;">Organization</h3>
+        <div style="text-align:left; margin-bottom:16px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Organization / Company Name</label>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+                <input type="text" id="orgNameInput" class="modal-input-field" style="margin-bottom:0;" placeholder="e.g. Acme Trading Co.">
+                <button class="add-row-btn" onclick="saveOrgName()">Save</button>
+            </div>
+            <div style="font-size:10.5px; color:#94a3b8; margin-top:4px;">Shown in the app header and used as default report title.</div>
+        </div>
+
+        <h3 style="margin-bottom: 10px; font-size: 14px; font-weight:800;">Settings & Backup</h3>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="padding:11px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:700;" onclick="exportDataBackup()">📤 Backup JSON</div>
+            <input type="file" id="restoreBackupInput" accept="application/json" style="display:none;" onchange="handleRestoreBackupFile(this)">
+            <div style="padding:11px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:700;" onclick="document.getElementById('restoreBackupInput').click()">📥 Restore from Backup</div>
+            <div style="padding:11px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:700;" onclick="openChangePasswordModal()">🔒 Change Password</div>
+        </div>
+    </div>
+
+    <nav class="bottom-app-bar">
+        <button class="bottom-nav-item active" id="botNav-dashboard" onclick="switchSection('dashboard')"><span class="icon">🏠</span><span>Dashboard</span></button>
+        <button class="bottom-nav-item" id="botNav-transaction" onclick="switchSection('transaction')"><span class="icon">📑</span><span>Transaction</span></button>
+        <button class="bottom-nav-item" id="botNav-inventory" onclick="switchSection('inventory')"><span class="icon">📦</span><span>Inventory</span></button>
+        <button class="bottom-nav-item" id="botNav-reports" onclick="switchSection('reports')"><span class="icon">📈</span><span>Reports</span></button>
+        <button class="bottom-nav-item" id="botNav-settings" onclick="switchSection('settings')"><span class="icon">⚙️</span><span>Settings</span></button>
+    </nav>
+</div>
+
+<!-- Transaction Modal -->
+<div class="modal-overlay" id="txModal">
+    <div class="modal-box">
+        <h4 id="txModalTitle">New Transaction</h4>
+        <input type="hidden" id="txEditIdx" value="-1">
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Date</label>
+            <input type="date" id="txDate" class="modal-input-field">
+        </div>
+        <div style="text-align:left; margin-bottom:6px; position:relative;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Product Name (Search to select)</label>
+            <div style="display:flex; gap:6px;">
+                <input type="text" id="txProductSearchInput" class="modal-input-field" placeholder="Type to search product..." oninput="handleTxProductSearch(this)" onblur="setTimeout(hideAutocompleteMenu, 250)" style="flex:1; margin-bottom:0;">
+                <button type="button" class="add-row-btn" style="padding:0 10px; font-size:11px;" onclick="checkCurrentStockBtn()">Stock</button>
+            </div>
+            <div id="modalStockDisplay" style="font-size:11px; font-weight:700; color:#0284c7; margin-top:3px;"></div>
+        </div>
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Transaction Type</label>
+            <select id="txType" class="modal-input-field">
+                <option value="purchase">Purchase (Stock In)</option>
+                <option value="sales">Sales (Stock Out)</option>
+            </select>
+        </div>
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Quantity</label>
+            <input type="number" inputmode="numeric" id="txQty" class="modal-input-field" placeholder="0">
+        </div>
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Description / Party</label>
+            <input type="text" id="txDesc" class="modal-input-field" placeholder="Notes or party details">
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel-btn" onclick="closeModal('txModal')">Cancel</button>
+            <button class="modal-btn modal-save-btn" onclick="submitTransaction()">Save Transaction</button>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory Modal -->
+<div class="modal-overlay" id="inventoryModal">
+    <div class="modal-box">
+        <h4 id="inventoryModalTitle">Product Catalog Entry</h4>
+        <input type="hidden" id="invEditIdx" value="-1">
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Product Name *</label>
+            <input type="text" id="invName" class="modal-input-field" placeholder="e.g. Widget A">
+        </div>
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Supplier Name</label>
+            <input type="text" id="invSupplier" class="modal-input-field" placeholder="e.g. Acme Corp">
+        </div>
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Opening / Initial Quantity</label>
+            <input type="number" inputmode="numeric" id="invQty" class="modal-input-field" placeholder="0">
+        </div>
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Reminder Date</label>
+            <input type="date" id="invReminder" class="modal-input-field">
+        </div>
+        <div style="text-align:left; margin-bottom:6px;">
+            <label style="font-size:10.5px; font-weight:700; color:#64748b;">Quantity Threshold (Low Stock Warning)</label>
+            <input type="number" inputmode="numeric" id="invThreshold" class="modal-input-field" placeholder="2">
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel-btn" onclick="closeModal('inventoryModal')">Cancel</button>
+            <button class="modal-btn modal-save-btn" onclick="submitInventoryProduct()">Save Product</button>
+        </div>
+    </div>
+</div>
+
+<!-- Log Out Modal -->
+<div class="modal-overlay" id="simpleLogoutModal">
+    <div class="modal-box">
+        <h4 style="color:#ef4444;">Confirm Logout</h4>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel-btn" style="flex:1;" onclick="closeModal('simpleLogoutModal')">No</button>
+            <button class="modal-btn modal-del-btn" style="flex:1;" onclick="executeConfirmedLogout()">Yes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="changePasswordModal">
+    <div class="modal-box">
+        <h4 style="color:#0284c7;">Change Password</h4>
+        <input type="password" id="newPasswordInput" class="modal-input-field" placeholder="New Password (min 6 chars)">
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel-btn" onclick="closeModal('changePasswordModal')">Cancel</button>
+            <button class="modal-btn modal-save-btn" onclick="handleUpdatePassword()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modals -->
+<div class="modal-overlay" id="backConfirmModal">
+    <div class="modal-box">
+        <h4 id="backConfirmTitle" style="color:#0284c7;">Leave this page?</h4>
+        <p id="backConfirmMsg" style="font-size:12px; color:#64748b; margin-bottom:6px;">Go back to the Dashboard?</p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel-btn" style="flex:1;" onclick="confirmBackAction(false)">Stay</button>
+            <button class="modal-btn modal-save-btn" style="flex:1; width:auto;" onclick="confirmBackAction(true)">Yes</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="deleteConfirmModal">
+    <div class="modal-box">
+        <h4 id="deleteConfirmTitle" style="color:#ef4444;">Delete this item?</h4>
+        <p id="deleteConfirmMsg" style="font-size:12px; color:#64748b; margin-bottom:6px;"></p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-cancel-btn" style="flex:1;" onclick="closeModal('deleteConfirmModal')">No</button>
+            <button class="modal-btn modal-del-btn" style="flex:1;" onclick="executeConfirmedDelete()">Yes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-overlay" id="forgotModal">
+    <div class="modal-box">
+        <h3>Reset Password</h3>
+        <p style="font-size:11.5px; color:#64748b; margin-bottom:10px;">Enter your username, 4-Digit PIN, and new password.</p>
+        <input type="text" id="resetUsernameInput" class="modal-input-field" placeholder="Username">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="resetPinInput" class="modal-input-field" placeholder="4-Digit PIN">
+        <input type="password" id="resetNewPassInput" class="modal-input-field" placeholder="New Password">
+        <button class="fintrack-btn" onclick="handleInstantPinPasswordReset()">Reset Password</button>
+        <div style="margin-top:10px;"><a onclick="closeModal('forgotModal')" style="font-size:11.5px; color:#64748b; cursor:pointer;">Cancel</a></div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // CONFIGURATION: LOCAL MULTI-TENANT SQLITE BACKEND
+    // ============================================================
+    const API_BASE = "http://localhost:3000/api";
+    let authToken = localStorage.getItem('stock_auth_token') || null;
+    let currentUser = JSON.parse(localStorage.getItem('stock_active_user')) || null;
+    let products = [];
+    let transactions = [];
+    let authMode = 'login';
+    let selectedTxProduct = '';
+    let showAllLowStock = false;
+    let syncTimer = null;
+
+    function showToast(message, type = 'success', undoFn = null) {
+        const toast = document.getElementById('fintrack-toast');
+        toast.className = type === 'success' ? 'success' : 'error';
+        document.getElementById('toast-msg').innerText = message;
+
+        let undoBtn = document.getElementById('toast-undo-btn');
+        if (undoFn) {
+            if (!undoBtn) {
+                undoBtn = document.createElement('button');
+                undoBtn.id = 'toast-undo-btn';
+                undoBtn.style.cssText = 'background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.5); color:#fff; font-weight:800; font-size:11.5px; padding:3px 10px; border-radius:6px; cursor:pointer; margin-left:6px;';
+                toast.appendChild(undoBtn);
+            }
+            undoBtn.innerText = 'UNDO';
+            undoBtn.style.display = 'inline-block';
+            undoBtn.onclick = function() {
+                undoFn();
+                toast.classList.remove('show');
+            };
+        } else if (undoBtn) {
+            undoBtn.style.display = 'none';
+        }
+
+        toast.classList.add('show');
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(() => toast.classList.remove('show'), undoFn ? 5000 : 3000);
+    }
+
+    function setSyncStatusDot(state) {
+        const dot = document.getElementById('syncStatusDot');
+        if (!dot) return;
+        dot.className = 'sync-status-dot' + (state === 'ok' ? '' : ' ' + state);
+    }
+
+    function updateStickyOffsets() {
+        const header = document.querySelector('.app-header');
+        if (header && header.offsetHeight) {
+            document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+        }
+    }
+    window.addEventListener('resize', updateStickyOffsets);
+
+    // ============================================================
+    // API WRAPPER (Sends JWT to access user's individual SQLite DB)
+    // ============================================================
+    async function apiRequest(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        try {
+            const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.error || `HTTP ${res.status}`);
+            }
+            return data;
+        } catch (err) {
+            console.error(`API Error [${endpoint}]:`, err);
+            throw err;
+        }
+    }
+
+    // ============================================================
+    // AUTHENTICATION LOGIC
+    // ============================================================
+    const REMEMBER_KEY = 'stock_remembered_username';
+    function prefillRememberedUsername() {
+        const remembered = localStorage.getItem(REMEMBER_KEY);
+        if (remembered) {
+            const usernameField = document.getElementById('loginUsername');
+            const rememberBox = document.getElementById('rememberMeCheck');
+            if (usernameField) usernameField.value = remembered;
+            if (rememberBox) rememberBox.checked = true;
+        }
+    }
+
+    function togglePasswordVisibility(inputId, btnEl) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        btnEl.innerText = showing ? '👁️' : '🙈';
+    }
+
+    function toggleAuthModeView(forceLogin = false) {
+        if (!forceLogin) {
+            authMode = authMode === 'login' ? 'register' : 'login';
+        }
+        document.getElementById('authSubtitle').innerText = authMode === 'register' ? 'Create an Account' : 'Please Login';
+        document.getElementById('authSubmitBtn').innerText = authMode === 'register' ? 'Register' : 'Login';
+        document.getElementById('pinInputGroup').style.display = authMode === 'register' ? 'block' : 'none';
+        document.getElementById('authModeToggleLink').innerText = authMode === 'register' ? 'Have account? Login' : 'Register';
+    }
+
+    async function handleAuthSubmit() {
+        const submitBtn = document.getElementById('authSubmitBtn');
+        const u = document.getElementById('loginUsername').value.trim().toLowerCase();
+        const p = document.getElementById('loginPassword').value.trim();
+        const pin = document.getElementById('userRecoveryPin').value.trim();
+
+        if (!u || !p) return showToast("Fill all credentials", "error");
+        if (p.length < 6) return showToast("Password must be at least 6 characters", "error");
+
+        submitBtn.disabled = true;
+        const originalLabel = submitBtn.innerText;
+        submitBtn.innerText = authMode === 'register' ? 'Registering...' : 'Logging in...';
+
+        try {
+            if (authMode === 'register') {
+                if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+                    return showToast("Enter a valid 4-digit PIN", "error");
+                }
+                const res = await apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ username: u, password: p, pin })
+                });
+                authToken = res.token;
+                currentUser = res.user;
+                showToast("Account created and SQLite DB prepared!");
+            } else {
+                const res = await apiRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                authToken = res.token;
+                currentUser = res.user;
+                showToast("Welcome back!");
+            }
+
+            localStorage.setItem('stock_auth_token', authToken);
+            localStorage.setItem('stock_active_user', JSON.stringify(currentUser));
+
+            if (document.getElementById('rememberMeCheck')?.checked) {
+                localStorage.setItem(REMEMBER_KEY, u);
+            } else {
+                localStorage.removeItem(REMEMBER_KEY);
+            }
+
+            checkAuthSession();
+        } catch (err) {
+            showToast(err.message, "error");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalLabel;
+        }
+    }
+
+    async function checkAuthSession() {
+        if (authToken && currentUser) {
+            document.getElementById('auth-screen-container').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('currentUserNameLabel').innerText = currentUser.username;
+            document.getElementById('heroUserName').innerText = currentUser.username;
+            document.body.classList.add('app-logged-in');
+            await loadData();
+            setTimeout(updateStickyOffsets, 50);
+            initBackButtonHandling();
+        } else {
+            document.getElementById('auth-screen-container').style.display = 'flex';
+            document.getElementById('main-app-content').style.display = 'none';
+            document.body.classList.remove('app-logged-in');
+        }
+    }
+
+    function promptSimpleLogout() { document.getElementById('simpleLogoutModal').style.display = 'flex'; }
+
+    function executeConfirmedLogout() {
+        localStorage.removeItem('stock_auth_token');
+        localStorage.removeItem('stock_active_user');
+        authToken = null;
+        currentUser = null;
+        products = [];
+        transactions = [];
+        closeModal('simpleLogoutModal');
+        checkAuthSession();
+    }
+
+    function openChangePasswordModal() { document.getElementById('changePasswordModal').style.display = 'flex'; }
+
+    async function handleUpdatePassword() {
+        const pass = document.getElementById('newPasswordInput').value.trim();
+        if (pass.length < 6) return showToast("Password min 6 chars", "error");
+        try {
+            await apiRequest('/auth/reset-password', {
+                method: 'POST',
+                body: JSON.stringify({ username: currentUser.username, newPassword: pass, pin: "bypass" })
+            });
+            document.getElementById('newPasswordInput').value = '';
+            showToast("Password updated!");
+            closeModal('changePasswordModal');
+        } catch (e) {
+            showToast(e.message, "error");
+        }
+    }
+
+    function openForgotModal() { document.getElementById('forgotModal').style.display = 'flex'; }
+
+    async function handleInstantPinPasswordReset() {
+        const u = document.getElementById('resetUsernameInput').value.trim().toLowerCase();
+        const pin = document.getElementById('resetPinInput').value.trim();
+        const p = document.getElementById('resetNewPassInput').value.trim();
+
+        if (!u || !pin || !p) return showToast("Fill all fields", "error");
+        if (p.length < 6) return showToast("Password must be at least 6 characters", "error");
+
+        try {
+            await apiRequest('/auth/reset-password', {
+                method: 'POST',
+                body: JSON.stringify({ username: u, pin, newPassword: p })
+            });
+            closeModal('forgotModal');
+            document.getElementById('resetUsernameInput').value = '';
+            document.getElementById('resetPinInput').value = '';
+            document.getElementById('resetNewPassInput').value = '';
+            showToast("Password reset done! Please login.");
+        } catch (e) {
+            showToast(e.message, "error");
+        }
+    }
+
+    // ============================================================
+    // DATA SYNC LOGIC (Interacting with User's Isolated DB)
+    // ============================================================
+    async function loadData() {
+        setSyncStatusDot('pending');
+        try {
+            const data = await apiRequest('/data/sync', { method: 'GET' });
+            products = data.products || [];
+            transactions = data.transactions || [];
+            if (data.org_name) localStorage.setItem(orgNameStorageKey(), data.org_name);
+            if (data.report_header) localStorage.setItem(reportHeaderStorageKey(), data.report_header);
+            setSyncStatusDot('ok');
+        } catch (err) {
+            console.warn("Backend load failed, falling back to local storage:", err.message);
+            setSyncStatusDot('error');
+            const pSaved = localStorage.getItem(`stock_products_${currentUser?.username || 'guest'}`);
+            try { products = pSaved ? JSON.parse(pSaved) : []; } catch (e) { products = []; }
+            const tSaved = localStorage.getItem(`stock_tx_${currentUser?.username || 'guest'}`);
+            try { transactions = tSaved ? JSON.parse(tSaved) : []; } catch (e) { transactions = []; }
+        }
+
+        products.forEach(p => { if (!p.supplier) p.supplier = ''; });
+        loadOrgName();
+        loadReportHeaderName();
+        renderDashboard();
+        renderInventory();
+        renderTransactions();
+        populateReportProducts();
+        populateSupplierFilter();
+        renderActiveReport();
+    }
+
+    function saveData() {
+        if (currentUser?.username) {
+            localStorage.setItem(`stock_products_${currentUser.username}`, JSON.stringify(products));
+            localStorage.setItem(`stock_tx_${currentUser.username}`, JSON.stringify(transactions));
+        }
+        renderDashboard();
+        renderInventory();
+        renderTransactions();
+        populateReportProducts();
+        populateSupplierFilter();
+        renderActiveReport();
+
+        clearTimeout(syncTimer);
+        setSyncStatusDot('pending');
+        syncTimer = setTimeout(() => syncWithBackend(false), 1200);
+    }
+
+    async function syncWithBackend(showFeedback = false) {
+        if (!authToken) {
+            if (showFeedback) showToast("You must be logged in to sync", "error");
+            return;
+        }
+
+        setSyncStatusDot('pending');
+        if (showFeedback) showToast("Syncing with private SQLite database...");
+
+        try {
+            await apiRequest('/data/sync', {
+                method: 'POST',
+                body: JSON.stringify({
+                    products,
+                    transactions,
+                    org_name: localStorage.getItem(orgNameStorageKey()) || '',
+                    report_header: localStorage.getItem(reportHeaderStorageKey()) || ''
+                })
+            });
+            setSyncStatusDot('ok');
+            if (showFeedback) showToast("Synced to your SQLite database!", "success");
+        } catch (err) {
+            setSyncStatusDot('error');
+            if (showFeedback) showToast(`Sync failed: ${err.message}`, "error");
+        }
+    }
+
+    // ============================================================
+    // INVENTORY & TRANSACTIONS LOGIC
+    // ============================================================
+    function getProductCurrentStock(productName) {
+        const prod = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+        let stock = prod ? (parseInt(prod.qty) || 0) : 0;
+        transactions.forEach(t => {
+            if (t.product && t.product.toLowerCase() === productName.toLowerCase()) {
+                const q = parseInt(t.qty) || 0;
+                if (t.type === 'purchase') stock += q;
+                if (t.type === 'sales') stock -= q;
+            }
+        });
+        return stock;
+    }
+
+    function handleTxProductSearch(inputEl) {
+        const menu = document.getElementById('liveAutocompleteMenu');
+        const val = (inputEl.value || '').trim().toLowerCase();
+        selectedTxProduct = inputEl.value;
+
+        if (!val) {
+            menu.style.display = 'none';
+            document.getElementById('modalStockDisplay').innerText = '';
+            return;
+        }
+
+        const matches = products.filter(p => p.name.toLowerCase().includes(val));
+        if (matches.length === 0) {
+            menu.style.display = 'none';
+            return;
+        }
+
+        menu.innerHTML = '';
+        matches.forEach(prod => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.innerText = prod.name + (prod.supplier ? ' (' + prod.supplier + ')' : '');
+            item.onmousedown = function(e) {
+                e.preventDefault();
+                selectTxProductItem(prod.name);
+            };
+            menu.appendChild(item);
+        });
+
+        const rect = inputEl.getBoundingClientRect();
+        menu.style.left = `${rect.left + window.scrollX}px`;
+        menu.style.top = `${rect.bottom + window.scrollY + 2}px`;
+        menu.style.width = `${Math.max(rect.width, 180)}px`;
+        menu.style.display = 'block';
+    }
+
+    function selectTxProductItem(name) {
+        selectedTxProduct = name;
+        document.getElementById('txProductSearchInput').value = name;
+        hideAutocompleteMenu();
+        updateModalStockInfo();
+    }
+
+    function hideAutocompleteMenu() {
+        const menu = document.getElementById('liveAutocompleteMenu');
+        if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+        const input = document.getElementById('txProductSearchInput');
+        if (input && e.target !== input && !e.target.closest('#liveAutocompleteMenu')) {
+            hideAutocompleteMenu();
+        }
+    });
+
+    function openInventoryModal(editIdx = -1) {
+        document.getElementById('invEditIdx').value = editIdx;
+        if (editIdx >= 0) {
+            const item = products[editIdx];
+            document.getElementById('invName').value = item.name || '';
+            document.getElementById('invSupplier').value = item.supplier || '';
+            document.getElementById('invQty').value = item.qty || '';
+            document.getElementById('invReminder').value = item.reminder || '';
+            document.getElementById('invThreshold').value = item.threshold || 2;
+            document.getElementById('inventoryModalTitle').innerText = '✏️ Edit Product';
+        } else {
+            document.getElementById('invName').value = '';
+            document.getElementById('invSupplier').value = '';
+            document.getElementById('invQty').value = '';
+            document.getElementById('invReminder').value = '';
+            document.getElementById('invThreshold').value = '2';
+            document.getElementById('inventoryModalTitle').innerText = '➕ Add Product';
+        }
+        document.getElementById('inventoryModal').style.display = 'flex';
+    }
+
+    function submitInventoryProduct() {
+        const idx = parseInt(document.getElementById('invEditIdx').value);
+        const name = document.getElementById('invName').value.trim();
+        const supplier = document.getElementById('invSupplier').value.trim();
+        const qty = parseInt(document.getElementById('invQty').value) || 0;
+        const reminder = document.getElementById('invReminder').value;
+        const threshold = parseInt(document.getElementById('invThreshold').value) || 2;
+
+        if (!name) return showToast("Enter product name", "error");
+
+        if (idx >= 0) {
+            if (products.some((p, i) => i !== idx && p.name.toLowerCase() === name.toLowerCase())) {
+                return showToast("Another product already uses that name", "error");
+            }
+            const oldName = products[idx].name;
+            products[idx] = { name, supplier, qty, reminder, threshold };
+            if (oldName.toLowerCase() !== name.toLowerCase()) {
+                transactions.forEach(t => {
+                    if (t.product.toLowerCase() === oldName.toLowerCase()) t.product = name;
+                });
+            }
+        } else {
+            if (products.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                return showToast("Product already exists", "error");
+            }
+            products.unshift({ name, supplier, qty, reminder, threshold });
+        }
+
+        saveData();
+        closeModal('inventoryModal');
+        showToast("Product saved successfully!");
+    }
+
+    function deleteProduct(idx) {
+        const prod = products[idx];
+        if (!prod) return;
+        const curStock = getProductCurrentStock(prod.name);
+
+        if (curStock !== 0) {
+            showToast(`Cannot delete "${prod.name}" — reduce stock to 0 first (currently ${curStock})`, "error");
+            return;
+        }
+
+        const relatedTxCount = transactions.filter(t => t.product.toLowerCase() === prod.name.toLowerCase()).length;
+        const msgDetail = relatedTxCount > 0
+            ? `Delete "${prod.name}" and its ${relatedTxCount} transaction${relatedTxCount === 1 ? '' : 's'}?`
+            : `Delete "${prod.name}" from the catalog?`;
+
+        openDeleteConfirm('Delete Product?', msgDetail, function() {
+            const removedTxEntries = [];
+            transactions.forEach((t, i) => {
+                if (t.product.toLowerCase() === prod.name.toLowerCase()) removedTxEntries.push({ index: i, tx: t });
+            });
+            for (let i = removedTxEntries.length - 1; i >= 0; i--) {
+                transactions.splice(removedTxEntries[i].index, 1);
+            }
+            products.splice(idx, 1);
+            saveData();
+
+            showToast(`Deleted "${prod.name}"`, "success", function undoDeleteProduct() {
+                products.splice(idx, 0, prod);
+                removedTxEntries
+                    .slice()
+                    .sort((a, b) => a.index - b.index)
+                    .forEach(entry => transactions.splice(entry.index, 0, entry.tx));
+                saveData();
+                showToast(`Restored "${prod.name}"`);
+            });
+        });
+    }
+
+    function openProductTransactionHistory(productName, defaultType = 'purchase') {
+        if (products.length === 0) {
+            showToast("Please add products in Inventory first", "error");
+            return;
+        }
+        switchSection('transaction');
+        openTxModalWithProduct(productName, defaultType);
+    }
+
+    function openTxModalWithProduct(productName, defaultType = 'purchase') {
+        const existing = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+        if (!existing) {
+            showToast("Product not found in catalog", "error");
+            return;
+        }
+
+        document.getElementById('txEditIdx').value = -1;
+        document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+        selectedTxProduct = existing.name;
+        document.getElementById('txProductSearchInput').value = existing.name;
+        document.getElementById('txType').value = defaultType;
+        document.getElementById('txQty').value = '';
+        document.getElementById('txDesc').value = '';
+        document.getElementById('txModalTitle').innerText = (defaultType === 'purchase' ? '📥 Stock In (Purchase): ' : '📤 Stock Out (Sales): ') + existing.name;
+        document.getElementById('modalStockDisplay').innerText = '';
+        document.getElementById('txModal').style.display = 'flex';
+        updateModalStockInfo();
+    }
+
+    function openTxModal(editIdx = -1) {
+        if (products.length === 0) {
+            showToast("Please add products in Inventory first", "error");
+            return;
+        }
+        document.getElementById('txEditIdx').value = editIdx;
+
+        if (editIdx >= 0) {
+            const item = transactions[editIdx];
+            document.getElementById('txDate').value = item.date;
+            selectedTxProduct = item.product;
+            document.getElementById('txProductSearchInput').value = item.product;
+            document.getElementById('txType').value = item.type;
+            document.getElementById('txQty').value = item.qty;
+            document.getElementById('txDesc').value = item.desc || '';
+            document.getElementById('txModalTitle').innerText = '✏️ Edit Transaction';
+        } else {
+            document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+            selectedTxProduct = '';
+            document.getElementById('txProductSearchInput').value = '';
+            document.getElementById('txType').value = 'purchase';
+            document.getElementById('txQty').value = '';
+            document.getElementById('txDesc').value = '';
+            document.getElementById('txModalTitle').innerText = '➕ New Transaction';
+        }
+        document.getElementById('modalStockDisplay').innerText = '';
+        document.getElementById('txModal').style.display = 'flex';
+        updateModalStockInfo();
+    }
+
+    function updateModalStockInfo() {
+        const prodName = (selectedTxProduct || document.getElementById('txProductSearchInput').value).trim();
+        if (prodName) {
+            const curStock = getProductCurrentStock(prodName);
+            document.getElementById('modalStockDisplay').innerText = `📦 Available Stock: ${curStock} units`;
+        } else {
+            document.getElementById('modalStockDisplay').innerText = '';
+        }
+    }
+
+    function checkCurrentStockBtn() {
+        const prodName = (selectedTxProduct || document.getElementById('txProductSearchInput').value).trim();
+        if (!prodName) return showToast("Select or type a product name first", "error");
+        const curStock = getProductCurrentStock(prodName);
+        showToast(`Current Stock for "${prodName}": ${curStock} units`, "success");
+        document.getElementById('modalStockDisplay').innerText = `📦 Available Stock: ${curStock} units`;
+    }
+
+    function submitTransaction() {
+        const idx = parseInt(document.getElementById('txEditIdx').value);
+        const date = document.getElementById('txDate').value;
+        const product = (selectedTxProduct || document.getElementById('txProductSearchInput').value).trim();
+        const type = document.getElementById('txType').value;
+        const qty = parseInt(document.getElementById('txQty').value) || 0;
+        const desc = document.getElementById('txDesc').value.trim();
+
+        if (!date) return showToast("Select a date", "error");
+        if (!product || qty <= 0) return showToast("Enter valid product and quantity", "error");
+
+        const matchedProduct = products.find(p => p.name.toLowerCase() === product.toLowerCase());
+        if (!matchedProduct) {
+            return showToast("Product does not exist in inventory catalog", "error");
+        }
+        const canonicalProduct = matchedProduct.name;
+
+        if (type === 'sales') {
+            const curStock = getProductCurrentStock(canonicalProduct);
+            let effectiveStock = curStock;
+            if (idx >= 0 && transactions[idx].type === 'sales' && transactions[idx].product.toLowerCase() === canonicalProduct.toLowerCase()) {
+                effectiveStock += parseInt(transactions[idx].qty) || 0;
+            }
+            if (qty > effectiveStock) {
+                if (!confirm(`⚠️ Warning: You are selling ${qty} units, but available stock is only ${effectiveStock}. Proceed anyway?`)) {
+                    return;
+                }
+            }
+        }
+
+        if (idx >= 0) {
+            transactions[idx] = { date, product: canonicalProduct, type, qty, desc };
+        } else {
+            transactions.unshift({ date, product: canonicalProduct, type, qty, desc });
+        }
+
+        saveData();
+        closeModal('txModal');
+        showToast("Transaction saved successfully!");
+    }
+
+    function deleteTransaction(idx) {
+        const tx = transactions[idx];
+        if (!tx) return;
+        openDeleteConfirm('Delete Transaction?', `Delete this ${tx.type} of "${tx.product}" (${tx.qty} units)?`, function() {
+            transactions.splice(idx, 1);
+            saveData();
+            showToast(`Deleted ${tx.type} of "${tx.product}"`, "success", function undoDeleteTx() {
+                transactions.splice(idx, 0, tx);
+                saveData();
+                showToast("Transaction restored");
+            });
+        });
+    }
+
+    function toggleLowStockView() {
+        showAllLowStock = !showAllLowStock;
+        renderDashboard();
+    }
+
+    function renderDashboard() {
+        let totalStockUnits = 0;
+        let totalPurchased = 0;
+        let totalSold = 0;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const reminders = [];
+        const lowStock = [];
+
+        products.forEach(p => {
+            const curStock = getProductCurrentStock(p.name);
+            totalStockUnits += curStock;
+            if (p.reminder && p.reminder <= todayStr) {
+                reminders.push(p.name);
+            }
+            if (curStock <= (p.threshold ?? 2)) {
+                lowStock.push(`${p.name} (${curStock} left)`);
+            }
+        });
+
+        transactions.forEach(t => {
+            const q = parseInt(t.qty) || 0;
+            if (t.type === 'purchase') totalPurchased += q;
+            if (t.type === 'sales') totalSold += q;
+        });
+
+        document.getElementById('heroTotalStock').innerText = `${totalStockUnits} Units`;
+        document.getElementById('dashTotalProducts').innerText = products.length;
+        document.getElementById('dashTotalIn').innerText = totalPurchased;
+        document.getElementById('dashTotalOut').innerText = totalSold;
+
+        const remContainer = document.getElementById('dashboardReminderContainer');
+        remContainer.innerHTML = reminders.length > 0 ?
+            `<div class="reminder-badge">⏰ Reminder Due for: ${escapeHtml(reminders.join(', '))}</div>` : '';
+
+        const lowContainer = document.getElementById('dashLowStockList');
+        if (lowStock.length === 0) {
+            lowContainer.innerHTML = 'All items sufficiently stocked';
+        } else {
+            const displayLimit = 4;
+            const itemsToDisplay = showAllLowStock ? lowStock : lowStock.slice(0, displayLimit);
+            let html = itemsToDisplay.map(n => `<div style="color:#dc2626; font-weight:700; margin-bottom:3px;">• ${escapeHtml(n)} (Low Stock)</div>`).join('');
+
+            if (lowStock.length > displayLimit) {
+                html += `<button class="view-more-btn" onclick="toggleLowStockView()">${showAllLowStock ? '▲ View Less' : `+ View More (${lowStock.length - displayLimit} more)`}</button>`;
+            }
+            lowContainer.innerHTML = html;
+        }
+
+        const txList = document.getElementById('recentTransactionsList');
+        txList.innerHTML = transactions.slice(0, 3).map(i =>
+            `<div class="recent-tx-item">
+              <div class="recent-tx-left"><div class="recent-tx-icon ${i.type === 'purchase' ? 'tx-inc-bg' : 'tx-exp-bg'}">${i.type === 'purchase' ? '↓' : '↑'}</div><div><div class="recent-tx-title">${escapeHtml(i.product)} (${i.type})</div><div class="recent-tx-sub">${escapeHtml(i.date)}</div></div></div>
+              <div class="recent-tx-amt" style="color:${i.type === 'purchase' ? '#059669' : '#dc2626'};">${i.qty} units</div>
+            </div>`
+        ).join('') || 'No movements logged';
+    }
+
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function renderInventory() {
+        const tbody = document.getElementById('inventoryTableBody');
+        const cardList = document.getElementById('inventoryMobileCardList');
+        const query = (document.getElementById('invFilterSearchInput')?.value || '').toLowerCase().trim();
+        tbody.innerHTML = '';
+        cardList.innerHTML = '';
+
+        let list = products.map((p, idx) => ({ ...p, originalIdx: idx }));
+        if (query) {
+            list = list.filter(p => p.name.toLowerCase().includes(query) || (p.supplier && p.supplier.toLowerCase().includes(query)));
+        }
+
+        if (list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">No products found</td></tr>`;
+            cardList.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:20px; font-size:12px;">No products found</div>`;
+            return;
+        }
+
+        list.forEach((item) => {
+            const curStock = getProductCurrentStock(item.name);
+            const supplierDisplay = escapeHtml(item.supplier || '-');
+            const safeName = escapeHtml(item.name);
+            const escapedNameForJs = item.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const deleteBtnHtml = curStock === 0
+                ? `<button class="action-btn" onclick="deleteProduct(${item.originalIdx})">🗑️</button>`
+                : `<button class="action-btn" disabled style="opacity:0.4; cursor:not-allowed;" title="Reduce stock to 0 before deleting">🗑️</button>`;
+
+            tbody.innerHTML += `
+              <tr>
+                <td><strong>${safeName}</strong></td>
+                <td><span class="supplier-tag">${supplierDisplay}</span></td>
+                <td class="num" style="font-weight:700; color:${curStock <= (item.threshold ?? 2) ? '#dc2626' : '#0f172a'};">${curStock}</td>
+                <td>${escapeHtml(item.reminder || '-')}</td>
+                <td>${item.threshold ?? 2}</td>
+                <td>
+                  <button class="tx-btn" title="Purchase (Stock In)" onclick="openProductTransactionHistory('${escapedNameForJs}', 'purchase')">➕ Tx</button>
+                  <button class="tx-btn-minus" title="Sales (Stock Out)" onclick="openProductTransactionHistory('${escapedNameForJs}', 'sales')">➖ Tx</button>
+                  <button class="edit-btn" onclick="openInventoryModal(${item.originalIdx})">✏️</button>
+                  ${deleteBtnHtml}
+                </td>
+              </tr>
+            `;
+
+            cardList.innerHTML += `
+              <div class="mobile-card-item">
+                <div class="mobile-card-row"><strong>${safeName}</strong> <span style="color:${curStock <= (item.threshold ?? 2) ? '#dc2626' : '#059669'}; font-weight:bold;">Stock: ${curStock}</span></div>
+                <div class="mobile-card-row" style="font-size:11px; color:#64748b;">Supplier: ${supplierDisplay} • Reminder: ${escapeHtml(item.reminder || 'None')}</div>
+                <div class="mobile-card-row">
+                    <div>
+                        <button class="tx-btn" title="Purchase (Stock In)" onclick="openProductTransactionHistory('${escapedNameForJs}', 'purchase')">➕ Tx</button>
+                        <button class="tx-btn-minus" title="Sales (Stock Out)" onclick="openProductTransactionHistory('${escapedNameForJs}', 'sales')">➖ Tx</button>
+                        <button class="edit-btn" onclick="openInventoryModal(${item.originalIdx})">✏️</button>
+                        ${deleteBtnHtml}
+                    </div>
+                </div>
+              </div>
+            `;
+        });
+    }
+
+    function renderTransactions() {
+        const tbody = document.getElementById('txTableBody');
+        const cardList = document.getElementById('txMobileCardList');
+        const query = (document.getElementById('txFilterSearchInput')?.value || '').toLowerCase().trim();
+        tbody.innerHTML = '';
+        cardList.innerHTML = '';
+
+        let list = transactions.map((t, idx) => ({ ...t, originalIdx: idx }));
+        if (query) {
+            list = list.filter(t => t.product.toLowerCase().includes(query) || (t.desc && t.desc.toLowerCase().includes(query)) || t.type.toLowerCase().includes(query));
+        }
+
+        if (list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">No transactions found</td></tr>`;
+            cardList.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:20px; font-size:12px;">No transactions found</div>`;
+            return;
+        }
+
+        list.forEach((item) => {
+            const isPur = item.type === 'purchase';
+            const safeProduct = escapeHtml(item.product);
+            tbody.innerHTML += `
+              <tr>
+                <td>${escapeHtml(item.date)}</td>
+                <td><strong>${safeProduct}</strong></td>
+                <td><span class="status-badge ${isPur ? 'in' : 'out'}">${item.type.toUpperCase()}</span></td>
+                <td class="num" style="font-weight:700;">${item.qty}</td>
+                <td>${escapeHtml(item.desc || '-')}</td>
+                <td>
+                  <button class="edit-btn" onclick="openTxModal(${item.originalIdx})">✏️</button>
+                  <button class="action-btn" onclick="deleteTransaction(${item.originalIdx})">🗑️</button>
+                </td>
+              </tr>
+            `;
+
+            cardList.innerHTML += `
+              <div class="mobile-card-item">
+                <div class="mobile-card-row"><strong>${safeProduct}</strong> <span class="status-badge ${isPur ? 'in' : 'out'}">${item.type.toUpperCase()} (${item.qty})</span></div>
+                <div class="mobile-card-row"><span style="color:#64748b; font-size:11px;">${escapeHtml(item.date)} • ${escapeHtml(item.desc || 'No desc')}</span><div><button class="edit-btn" onclick="openTxModal(${item.originalIdx})">✏️</button><button class="action-btn" onclick="deleteTransaction(${item.originalIdx})">🗑️</button></div></div>
+              </div>
+            `;
+        });
+    }
+
+    function populateReportProducts() {
+        const sel = document.getElementById('reportProductSelect');
+        if (!sel) return;
+        const currentVal = sel.value;
+        sel.innerHTML = '<option value="ALL">-- All Products --</option>';
+        products.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.innerText = p.name + (p.supplier ? ' (' + p.supplier + ')' : '');
+            sel.appendChild(opt);
+        });
+        if (currentVal) sel.value = currentVal;
+    }
+
+    function populateSupplierFilter() {
+        const sel = document.getElementById('reportSupplierSelect');
+        if (!sel) return;
+        const currentVal = sel.value;
+        sel.innerHTML = '<option value="ALL">-- All Suppliers --</option>';
+        const suppliers = new Set();
+        products.forEach(p => { if (p.supplier) suppliers.add(p.supplier); });
+        suppliers.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.innerText = s;
+            sel.appendChild(opt);
+        });
+        if (currentVal) sel.value = currentVal;
+    }
+
+    function handleReportTypeChange() {
+        const type = document.getElementById('reportTypeSelect').value;
+        const prodGroup = document.getElementById('reportProductFilterGroup');
+        const suppGroup = document.getElementById('reportSupplierFilterGroup');
+        prodGroup.style.display = (type === 'stockledger' || type === 'summary' || type === 'daywise' || type === 'monthwise' || type === 'yearwise') ? 'flex' : 'none';
+        suppGroup.style.display = (type === 'supplier') ? 'flex' : 'none';
+        if (type === 'lowstock') { prodGroup.style.display = 'none'; suppGroup.style.display = 'none'; }
+        renderActiveReport();
+    }
+
+    const REPORT_CATALOG = {
+        daywise: {
+            label: 'Day-wise',
+            icon: '📅',
+            reports: [
+                { type: 'daywise', title: 'Day-wise Summary', sub: 'Purchases & sales grouped by day', icon: '📅' },
+                { type: 'monthwise', title: 'Month-wise Summary', sub: 'Purchases & sales grouped by month', icon: '🗓️' },
+                { type: 'yearwise', title: 'Year-wise Summary', sub: 'Purchases & sales grouped by year', icon: '📆' }
+            ]
+        },
+        inventory: {
+            label: 'Inventory',
+            icon: '📦',
+            reports: [
+                { type: 'summary', title: 'Stock Summary', sub: 'Opening, purchased, sold & available stock', icon: '📦' },
+                { type: 'stockledger', title: 'Stock Ledger', sub: 'Full purchase/sale movement history per product', icon: '📒' },
+                { type: 'lowstock', title: 'Low Stock / Reorder Report', sub: 'Items at or below their reorder threshold', icon: '⚠️' }
+            ]
+        },
+        supplier: {
+            label: 'Supplier',
+            icon: '🏢',
+            reports: [
+                { type: 'supplier', title: 'Supplier-wise Report', sub: 'Stock movement grouped by supplier', icon: '🏢' }
+            ]
+        }
+    };
+
+    let activeReportCategory = 'inventory';
+
+    function renderReportTabs() {
+        const row = document.getElementById('reportTabsRow');
+        if (!row) return;
+        row.innerHTML = Object.keys(REPORT_CATALOG).map(key => {
+            const cat = REPORT_CATALOG[key];
+            return `<button class="report-tab-pill ${key === activeReportCategory ? 'active' : ''}" onclick="selectReportTab('${key}')">${cat.label}</button>`;
+        }).join('');
+    }
+
+    function selectReportTab(categoryKey) {
+        activeReportCategory = categoryKey;
+        renderReportTabs();
+        renderReportMenuList();
+    }
+
+    function renderReportMenuList() {
+        const list = document.getElementById('reportMenuList');
+        if (!list) return;
+        const cat = REPORT_CATALOG[activeReportCategory];
+        if (!cat) { list.innerHTML = ''; return; }
+        list.innerHTML = `<div class="report-menu-category-title">${cat.icon} ${cat.label} Reports</div>` +
+            cat.reports.map(r => `
+                <div class="report-menu-item" onclick="openReportDetail('${r.type}')">
+                    <div class="report-menu-icon">${r.icon}</div>
+                    <div class="report-menu-text">
+                        <div class="report-menu-item-title">${escapeHtml(r.title)}</div>
+                        <div class="report-menu-item-sub">${escapeHtml(r.sub)}</div>
+                    </div>
+                    <div class="report-menu-chevron">›</div>
+                </div>
+            `).join('');
+    }
+
+    function openReportDetail(type) {
+        const title = findReportTitleByType(type);
+        document.getElementById('reportTypeSelect').value = type;
+        document.getElementById('reportDetailTitle').innerText = title;
+        document.getElementById('reportsMenuView').style.display = 'none';
+        document.getElementById('reportDetailView').style.display = 'block';
+        handleReportTypeChange();
+    }
+
+    function findReportTitleByType(type) {
+        for (const key in REPORT_CATALOG) {
+            const found = REPORT_CATALOG[key].reports.find(r => r.type === type);
+            if (found) return found.title;
+        }
+        return 'Report';
+    }
+
+    function backToReportsMenu() {
+        document.getElementById('reportDetailView').style.display = 'none';
+        document.getElementById('reportsMenuView').style.display = 'block';
+    }
+
+    function initReportsMenu() {
+        renderReportTabs();
+        renderReportMenuList();
+        document.getElementById('reportDetailView').style.display = 'none';
+        document.getElementById('productStatementView').style.display = 'none';
+        document.getElementById('reportsMenuView').style.display = 'block';
+    }
+
+    let statementReturnView = 'reportsMenuView';
+
+    function openProductStatement(productName) {
+        const prod = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+        if (!prod) return showToast("Product not found in catalog", "error");
+
+        statementReturnView = (document.getElementById('reportDetailView').style.display !== 'none') ? 'reportDetailView' : 'reportsMenuView';
+
+        document.getElementById('reportsMenuView').style.display = 'none';
+        document.getElementById('reportDetailView').style.display = 'none';
+        document.getElementById('productStatementView').style.display = 'block';
+        document.getElementById('statementProductTitle').innerText = `📒 ${prod.name}`;
+
+        renderProductStatementTable(prod);
+    }
+
+    function closeProductStatement() {
+        document.getElementById('productStatementView').style.display = 'none';
+        document.getElementById(statementReturnView).style.display = 'block';
+    }
+
+    function renderProductStatementTable(prod) {
+        const tbody = document.getElementById('statementTableBody');
+        const chips = document.getElementById('statementSummaryChips');
+        const threshold = prod.threshold ?? 2;
+        let runningBal = parseInt(prod.qty) || 0;
+        let totalPur = 0, totalSal = 0;
+
+        let rows = `
+            <tr style="background:#f1f5f9; font-weight:700;">
+                <td>--</td>
+                <td class="num" style="color:#059669;">--</td>
+                <td class="num" style="color:#dc2626;">--</td>
+                <td class="num">${runningBal}</td>
+                <td style="font-size:11px; color:#64748b;">Opening Stock${prod.supplier ? ' • ' + escapeHtml(prod.supplier) : ''}</td>
+            </tr>
+        `;
+
+        const tx = transactions
+            .filter(t => t.product.toLowerCase() === prod.name.toLowerCase())
+            .slice()
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        if (tx.length === 0) {
+            rows += `<tr><td colspan="5"><div class="report-empty-state"><span class="big-icon">📄</span><h5>No Movements Yet</h5><p>This product has no purchase or sales history.</p></div></td></tr>`;
+        }
+
+        tx.forEach(t => {
+            const q = parseInt(t.qty) || 0;
+            let pur = 0, sal = 0;
+            if (t.type === 'purchase') { pur = q; runningBal += q; totalPur += q; }
+            else { sal = q; runningBal -= q; totalSal += q; }
+
+            rows += `
+                <tr>
+                    <td>${escapeHtml(t.date)}</td>
+                    <td class="num" style="color:#059669; font-weight:700;">${pur > 0 ? '+' + pur : '-'}</td>
+                    <td class="num" style="color:#dc2626; font-weight:700;">${sal > 0 ? '-' + sal : '-'}</td>
+                    <td class="num" style="font-weight:800; color:${runningBal <= threshold ? '#dc2626' : '#0f172a'};">${runningBal}</td>
+                    <td>${escapeHtml(t.desc || '-')}</td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = rows;
+        chips.innerHTML = `
+            <span class="report-summary-item">📈 Total Purchased: <span style="color:#059669;">+${totalPur}</span></span>
+            <span class="report-summary-item">📉 Total Sold: <span style="color:#dc2626;">-${totalSal}</span></span>
+            <span class="report-summary-item">📦 Current Balance: <span style="color:${runningBal <= threshold ? '#dc2626' : '#0f172a'};">${runningBal}</span></span>
+        `;
+    }
+
+    function renderActiveReport() {
+        const type = document.getElementById('reportTypeSelect').value;
+        const selectedProd = document.getElementById('reportProductSelect').value;
+        const selectedSupplier = document.getElementById('reportSupplierSelect').value;
+        const tbody = document.getElementById('ledgerDetailBody');
+        const thead = document.getElementById('reportTableHead');
+        const summaryChips = document.getElementById('reportSummaryChips');
+
+        if (!tbody || !thead || !summaryChips) return;
+
+        tbody.innerHTML = '';
+        summaryChips.style.display = 'none';
+        summaryChips.innerHTML = '';
+
+        if (type === 'stockledger') {
+            thead.innerHTML = `
+              <tr>
+                <th>Date</th>
+                <th>Product</th>
+                <th>Supplier</th>
+                <th class="num" style="color:#059669;">Purchase (+)</th>
+                <th class="num" style="color:#dc2626;">Sales (-)</th>
+                <th class="num">Balance</th>
+                <th>Description</th>
+              </tr>
+            `;
+
+            let targetProducts = products;
+            if (selectedProd && selectedProd !== 'ALL') {
+                targetProducts = products.filter(p => p.name.toLowerCase() === selectedProd.toLowerCase());
+            }
+
+            if (targetProducts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7"><div class="report-empty-state"><span class="big-icon">📦</span><h5>No Products</h5><p>Add products to view stock ledger.</p></div></td></tr>`;
+                return;
+            }
+
+            let totalPurchasedAll = 0;
+            let totalSoldAll = 0;
+
+            targetProducts.forEach(prod => {
+                let runningBal = parseInt(prod.qty) || 0;
+                const prodSupplier = prod.supplier || '-';
+
+                tbody.innerHTML += `
+                    <tr class="clickable-row" onclick="openProductStatement('${prod.name.replace(/'/g, "\\'")}')" style="background:#f1f5f9; font-weight:700;">
+                        <td>--</td>
+                        <td><strong>${escapeHtml(prod.name)} (Opening)</strong></td>
+                        <td>${prod.supplier ? `<span class="supplier-tag">${escapeHtml(prod.supplier)}</span>` : '-'}</td>
+                        <td class="num" style="color:#059669;">--</td>
+                        <td class="num" style="color:#dc2626;">--</td>
+                        <td class="num">${runningBal}</td>
+                        <td style="font-size:11px; color:#64748b;">Opening Stock — tap for full statement</td>
+                    </tr>
+                `;
+
+                const prodTx = transactions
+                    .filter(t => t.product.toLowerCase() === prod.name.toLowerCase())
+                    .slice()
+                    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                prodTx.forEach(t => {
+                    const isPur = t.type === 'purchase';
+                    const q = parseInt(t.qty) || 0;
+                    let purQty = 0, salQty = 0;
+
+                    if (isPur) {
+                        purQty = q;
+                        runningBal += q;
+                        totalPurchasedAll += q;
+                    } else {
+                        salQty = q;
+                        runningBal -= q;
+                        totalSoldAll += q;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${escapeHtml(t.date)}</td>
+                            <td><strong>${escapeHtml(t.product)}</strong></td>
+                            <td>${prodSupplier !== '-' ? `<span class="supplier-tag">${escapeHtml(prodSupplier)}</span>` : '-'}</td>
+                            <td class="num" style="color:#059669; font-weight:700;">${purQty > 0 ? '+' + purQty : '-'}</td>
+                            <td class="num" style="color:#dc2626; font-weight:700;">${salQty > 0 ? '-' + salQty : '-'}</td>
+                            <td class="num" style="font-weight:800; color:${runningBal <= (prod.threshold ?? 2) ? '#dc2626' : '#0f172a'};">${runningBal}</td>
+                            <td>${escapeHtml(t.desc || '-')}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            summaryChips.style.display = 'flex';
+            summaryChips.innerHTML = `
+              <span class="report-summary-item">📦 Products Shown: <span>${targetProducts.length}</span></span>
+              <span class="report-summary-item">📈 Total Purchased: <span style="color:#059669;">+${totalPurchasedAll}</span></span>
+              <span class="report-summary-item">📉 Total Sold: <span style="color:#dc2626;">-${totalSoldAll}</span></span>
+            `;
+
+        } else if (type === 'daywise' || type === 'monthwise' || type === 'yearwise') {
+            const grouping = {};
+            let filteredTx = transactions;
+            if (selectedProd && selectedProd !== 'ALL') {
+                filteredTx = filteredTx.filter(t => t.product.toLowerCase() === selectedProd.toLowerCase());
+            }
+
+            filteredTx.forEach(t => {
+                if (!t.date) return;
+                const parts = t.date.split('-');
+                if (parts.length < 3) return;
+                const [yr, mo] = parts;
+                let periodKey = '';
+                if (type === 'daywise') periodKey = t.date;
+                else if (type === 'monthwise') periodKey = `${yr}-${mo}`;
+                else if (type === 'yearwise') periodKey = yr;
+
+                const comboKey = `${periodKey}___${t.product}`;
+                if (!grouping[comboKey]) {
+                    grouping[comboKey] = { period: periodKey, product: t.product, purchase: 0, sales: 0, count: 0 };
+                }
+                const q = parseInt(t.qty) || 0;
+                if (t.type === 'purchase') grouping[comboKey].purchase += q;
+                else grouping[comboKey].sales += q;
+                grouping[comboKey].count += 1;
+            });
+
+            const labelHeader = type === 'daywise' ? 'Date' : type === 'monthwise' ? 'Month' : 'Year';
+            thead.innerHTML = `
+              <tr>
+                <th>${labelHeader}</th>
+                <th>Stock / Product Name</th>
+                <th class="num" style="color:#059669;">Purchase (+)</th>
+                <th class="num" style="color:#dc2626;">Sales (-)</th>
+                <th class="num">Net Change</th>
+              </tr>
+            `;
+
+            const sortedComboKeys = Object.keys(grouping).sort().reverse();
+            if (sortedComboKeys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5"><div class="report-empty-state"><span class="big-icon">📊</span><h5>No Data</h5><p>No transactions found for this period filter.</p></div></td></tr>`;
+                return;
+            }
+
+            let grandPur = 0, grandSal = 0;
+            sortedComboKeys.forEach(ck => {
+                const item = grouping[ck];
+                const net = item.purchase - item.sales;
+                grandPur += item.purchase;
+                grandSal += item.sales;
+
+                let displayPeriod = item.period;
+                if (type === 'monthwise' && item.period.includes('-')) {
+                    const [y, m] = item.period.split('-');
+                    displayPeriod = new Date(parseInt(y), parseInt(m) - 1, 1).toLocaleString('default', { month: 'short', year: 'numeric' });
+                }
+
+                tbody.innerHTML += `
+                    <tr class="clickable-row" onclick="openProductStatement('${item.product.replace(/'/g, "\\'")}')">
+                        <td><strong>${escapeHtml(displayPeriod)}</strong></td>
+                        <td><strong>${escapeHtml(item.product)}</strong> <span class="report-stat-chip">${item.count} tx</span></td>
+                        <td class="num" style="color:#059669; font-weight:bold;">${item.purchase > 0 ? '+' + item.purchase : '0'}</td>
+                        <td class="num" style="color:#dc2626; font-weight:bold;">${item.sales > 0 ? '-' + item.sales : '0'}</td>
+                        <td class="num" style="font-weight:800; color:${net >= 0 ? '#059669' : '#dc2626'};">${net >= 0 ? '+' : ''}${net}</td>
+                    </tr>
+                `;
+            });
+
+            summaryChips.style.display = 'flex';
+            summaryChips.innerHTML = `
+              <span class="report-summary-item">📊 Rows: <span>${sortedComboKeys.length}</span></span>
+              <span class="report-summary-item">📈 Total Purchased: <span style="color:#059669;">+${grandPur}</span></span>
+              <span class="report-summary-item">📉 Total Sold: <span style="color:#dc2626;">-${grandSal}</span></span>
+              <span class="report-summary-item">📦 Net Movement: <span style="color:#0f172a;">${grandPur - grandSal}</span></span>
+            `;
+
+        } else if (type === 'summary') {
+            thead.innerHTML = `
+              <tr>
+                <th>Product</th>
+                <th>Supplier</th>
+                <th class="num">Opening</th>
+                <th class="num">Purchased</th>
+                <th class="num">Sold</th>
+                <th class="num">Available</th>
+                <th>Status</th>
+              </tr>
+            `;
+            if (products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7"><div class="report-empty-state"><span class="big-icon">📦</span><h5>No Products</h5><p>Add products to see stock summary.</p></div></td></tr>`;
+                return;
+            }
+            let totalAvail = 0;
+            let filteredProducts = products;
+            if (selectedProd && selectedProd !== 'ALL') {
+                filteredProducts = products.filter(p => p.name.toLowerCase() === selectedProd.toLowerCase());
+            }
+            filteredProducts.forEach(p => {
+                let pur = 0, sal = 0;
+                transactions.forEach(t => {
+                    if (t.product.toLowerCase() === p.name.toLowerCase()) {
+                        if (t.type === 'purchase') pur += parseInt(t.qty) || 0;
+                        else sal += parseInt(t.qty) || 0;
+                    }
+                });
+                const cur = (parseInt(p.qty) || 0) + pur - sal;
+                totalAvail += cur;
+                const status = cur <= (p.threshold ?? 2) ? '⚠️ Low' : '✅ OK';
+                const statusColor = cur <= (p.threshold ?? 2) ? '#dc2626' : '#059669';
+                tbody.innerHTML += `
+                    <tr class="clickable-row" onclick="openProductStatement('${p.name.replace(/'/g, "\\'")}')">
+                      <td><strong>${escapeHtml(p.name)}</strong></td>
+                      <td>${p.supplier ? `<span class="supplier-tag">${escapeHtml(p.supplier)}</span>` : '-'}</td>
+                      <td class="num">${p.qty}</td>
+                      <td class="num" style="color:#059669;">+${pur}</td>
+                      <td class="num" style="color:#dc2626;">-${sal}</td>
+                      <td class="num" style="font-weight:700; color:${statusColor};">${cur}</td>
+                      <td><span style="color:${statusColor}; font-weight:700; font-size:11px;">${status}</span></td>
+                    </tr>
+                `;
+            });
+            summaryChips.style.display = 'flex';
+            summaryChips.innerHTML = `
+              <span class="report-summary-item">📦 Total Products: <span>${filteredProducts.length}</span></span>
+              <span class="report-summary-item">📊 Total Available: <span style="color:#0f172a;">${totalAvail} units</span></span>
+            `;
+
+        } else if (type === 'supplier') {
+            thead.innerHTML = `
+              <tr>
+                <th>Supplier</th>
+                <th>Product</th>
+                <th class="num">Purchased</th>
+                <th class="num">Sold</th>
+                <th class="num">Available</th>
+              </tr>
+            `;
+            const supplierMap = {};
+            products.forEach(p => {
+                const supp = p.supplier || 'Unassigned';
+                if (!supplierMap[supp]) supplierMap[supp] = [];
+                supplierMap[supp].push(p);
+            });
+            const filteredSuppliers = Object.keys(supplierMap);
+            if (filteredSuppliers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5"><div class="report-empty-state"><span class="big-icon">🏢</span><h5>No Suppliers</h5><p>Add supplier names to products to see this report.</p></div></td></tr>`;
+                return;
+            }
+            let filteredSupps = filteredSuppliers;
+            if (selectedSupplier && selectedSupplier !== 'ALL') {
+                filteredSupps = filteredSupps.filter(s => s === selectedSupplier);
+            }
+            let grandPur = 0, grandSal = 0;
+            filteredSupps.forEach(supp => {
+                const prods = supplierMap[supp] || [];
+                prods.forEach(p => {
+                    let pur = 0, sal = 0;
+                    transactions.forEach(t => {
+                        if (t.product.toLowerCase() === p.name.toLowerCase()) {
+                            if (t.type === 'purchase') pur += parseInt(t.qty) || 0;
+                            else sal += parseInt(t.qty) || 0;
+                        }
+                    });
+                    const cur = (parseInt(p.qty) || 0) + pur - sal;
+                    grandPur += pur;
+                    grandSal += sal;
+                    tbody.innerHTML += `
+                      <tr class="clickable-row" onclick="openProductStatement('${p.name.replace(/'/g, "\\'")}')">
+                        <td><span class="supplier-tag">${escapeHtml(supp)}</span></td>
+                        <td><strong>${escapeHtml(p.name)}</strong></td>
+                        <td class="num" style="color:#059669;">+${pur}</td>
+                        <td class="num" style="color:#dc2626;">-${sal}</td>
+                        <td class="num" style="font-weight:700;">${cur}</td>
+                      </tr>
+                    `;
+                });
+            });
+            summaryChips.style.display = 'flex';
+            summaryChips.innerHTML = `
+              <span class="report-summary-item">🏢 Suppliers: <span>${filteredSupps.length}</span></span>
+              <span class="report-summary-item">📈 Total Purchased: <span style="color:#059669;">+${grandPur}</span></span>
+              <span class="report-summary-item">📉 Total Sold: <span style="color:#dc2626;">-${grandSal}</span></span>
+            `;
+
+        } else if (type === 'lowstock') {
+            thead.innerHTML = `
+              <tr>
+                <th>Product</th>
+                <th>Supplier</th>
+                <th class="num">Available Stock</th>
+                <th class="num">Threshold</th>
+                <th class="num">Suggested Reorder Qty</th>
+                <th>Reminder Date</th>
+              </tr>
+            `;
+
+            const lowItems = products
+                .map(p => ({ ...p, cur: getProductCurrentStock(p.name) }))
+                .filter(p => p.cur <= (p.threshold ?? 2))
+                .sort((a, b) => a.cur - b.cur);
+
+            if (lowItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6"><div class="report-empty-state"><span class="big-icon">✅</span><h5>All Stocked Up</h5><p>No products are currently at or below their low-stock threshold.</p></div></td></tr>`;
+            } else {
+                lowItems.forEach(p => {
+                    const threshold = p.threshold ?? 2;
+                    const reorderQty = Math.max(threshold * 2 - p.cur, threshold, 1);
+                    tbody.innerHTML += `
+                      <tr class="clickable-row" onclick="openProductStatement('${p.name.replace(/'/g, "\\'")}')">
+                        <td><strong>${escapeHtml(p.name)}</strong></td>
+                        <td>${p.supplier ? `<span class="supplier-tag">${escapeHtml(p.supplier)}</span>` : '-'}</td>
+                        <td class="num" style="font-weight:800; color:#dc2626;">${p.cur}</td>
+                        <td class="num">${threshold}</td>
+                        <td class="num" style="font-weight:800; color:#059669;">+${reorderQty}</td>
+                        <td>${escapeHtml(p.reminder || '-')}</td>
+                      </tr>
+                    `;
+                });
+            }
+
+            summaryChips.style.display = 'flex';
+            summaryChips.innerHTML = `
+              <span class="report-summary-item">⚠️ Low Stock Items: <span style="color:#dc2626;">${lowItems.length}</span></span>
+              <span class="report-summary-item">📦 Total Products: <span>${products.length}</span></span>
+            `;
+        }
+    }
+
+    // ============================================================
+    // UTILITIES, SETTINGS & EXPORTS
+    // ============================================================
+    function orgNameStorageKey() { return `stock_org_name_${currentUser?.username || 'guest'}`; }
+    function reportHeaderStorageKey() { return `stock_report_header_${currentUser?.username || 'guest'}`; }
+
+    function loadOrgName() {
+        const saved = localStorage.getItem(orgNameStorageKey()) || '';
+        const input = document.getElementById('orgNameInput');
+        if (input) input.value = saved;
+        const brandEl = document.getElementById('appBrandTitle');
+        const sidebarBrandEl = document.querySelector('#desktopSidebar .sidebar-brand-title');
+        if (brandEl) brandEl.innerText = saved || 'StockTrack';
+        if (sidebarBrandEl) sidebarBrandEl.innerText = saved || 'StockTrack';
+        return saved;
+    }
+
+    function saveOrgName() {
+        const val = (document.getElementById('orgNameInput')?.value || '').trim();
+        localStorage.setItem(orgNameStorageKey(), val);
+        loadOrgName();
+        const reportInput = document.getElementById('reportHeaderNameInput');
+        const savedReportHeader = localStorage.getItem(reportHeaderStorageKey());
+        if (reportInput && !savedReportHeader && val) {
+            reportInput.value = val + ' — Inventory Report';
+            saveReportHeaderName();
+        }
+        showToast(val ? "Organization name saved" : "Organization name cleared");
+        saveData();
+    }
+
+    function loadReportHeaderName() {
+        const input = document.getElementById('reportHeaderNameInput');
+        if (!input) return;
+        const saved = localStorage.getItem(reportHeaderStorageKey());
+        const orgName = localStorage.getItem(orgNameStorageKey());
+        input.value = saved || (orgName ? orgName + ' — Inventory Report' : 'StockTrack Inventory Report');
+    }
+
+    function saveReportHeaderName() {
+        const input = document.getElementById('reportHeaderNameInput');
+        if (!input) return;
+        localStorage.setItem(reportHeaderStorageKey(), input.value);
+        saveData();
+    }
+
+    function handleRestoreBackupFile(inputEl) {
+        const file = inputEl.files && inputEl.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const parsed = JSON.parse(String(e.target.result || '{}'));
+                if (!Array.isArray(parsed.products) || !Array.isArray(parsed.transactions)) {
+                    showToast("Invalid backup file format", "error");
+                    return;
+                }
+                const replace = confirm(`Replace all current data with this backup?`);
+                if (replace) {
+                    products = parsed.products;
+                    transactions = parsed.transactions;
+                } else {
+                    parsed.products.forEach(p => {
+                        if (!products.some(ex => ex.name.toLowerCase() === p.name.toLowerCase())) products.push(p);
+                    });
+                    transactions = transactions.concat(parsed.transactions);
+                }
+                products.forEach(p => { if (!p.supplier) p.supplier = ''; });
+                saveData();
+                showToast("Backup restored successfully!");
+            } catch (err) {
+                showToast("Could not read backup file", "error");
+            } finally {
+                inputEl.value = '';
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    async function downloadReportPDF() {
+        const table = document.querySelector('#reportTableScroll table');
+        const headerName = (document.getElementById('reportHeaderNameInput')?.value || 'StockTrack Inventory Report').trim();
+        const reportTypeLabel = document.getElementById('reportDetailTitle')?.innerText || 'Report';
+        const renderArea = document.getElementById('reportPdfRenderArea');
+
+        if (!table) return showToast("No report data to export", "error");
+        if (typeof html2canvas === 'undefined' || !window.jspdf) {
+            return showToast("PDF library failed to load.", "error");
+        }
+
+        const todayLabel = new Date().toLocaleDateString('default', { year: 'numeric', month: 'short', day: 'numeric' });
+        renderArea.innerHTML = `
+            <div class="pdf-title">${escapeHtml(headerName || 'StockTrack Inventory Report')}</div>
+            <div class="pdf-subtitle">${escapeHtml(reportTypeLabel)} • Generated on ${todayLabel}</div>
+        `;
+        const clonedTable = table.cloneNode(true);
+        clonedTable.style.width = '100%';
+        clonedTable.style.minWidth = '0';
+        renderArea.appendChild(clonedTable);
+
+        try {
+            showToast("Preparing PDF...");
+            const canvas = await html2canvas(renderArea, { scale: 2, backgroundColor: '#ffffff' });
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 24;
+            const imgWidth = pageWidth - margin * 2;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            let heightLeft = imgHeight;
+            let position = margin;
+            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - margin * 2);
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight + margin;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - margin * 2);
+            }
+
+            const safeName = (headerName || 'stock_report').replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+            pdf.save(`${safeName}.pdf`);
+            showToast("PDF downloaded successfully!");
+        } catch (e) {
+            showToast("Failed to generate PDF", "error");
+        } finally {
+            renderArea.innerHTML = '';
+        }
+    }
+
+    function switchSection(section) {
+        document.getElementById('dashboard-section').style.display = section === 'dashboard' ? 'block' : 'none';
+        document.getElementById('transaction-section').style.display = section === 'transaction' ? 'block' : 'none';
+        document.getElementById('inventory-section').style.display = section === 'inventory' ? 'block' : 'none';
+        document.getElementById('ledger-section').style.display = section === 'reports' ? 'block' : 'none';
+        document.getElementById('settings-section').style.display = section === 'settings' ? 'block' : 'none';
+
+        document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById(`botNav-${section}`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        document.querySelectorAll('.side-nav-item').forEach(b => b.classList.remove('active'));
+        const activeSideBtn = document.getElementById(`sideNav-${section}`);
+        if (activeSideBtn) activeSideBtn.classList.add('active');
+
+        if (section === 'reports') initReportsMenu();
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    let pendingDeleteAction = null;
+    function openDeleteConfirm(title, msg, actionFn) {
+        document.getElementById('deleteConfirmTitle').innerText = title;
+        document.getElementById('deleteConfirmMsg').innerText = msg;
+        pendingDeleteAction = actionFn;
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+
+    function executeConfirmedDelete() {
+        closeModal('deleteConfirmModal');
+        const action = pendingDeleteAction;
+        pendingDeleteAction = null;
+        if (typeof action === 'function') action();
+    }
+
+    let backNavReady = false;
+    let pendingBackAction = null;
+
+    function initBackButtonHandling() {
+        if (backNavReady) return;
+        backNavReady = true;
+        try {
+            history.pushState({ stocktrackNav: true }, '');
+            window.addEventListener('popstate', handleAppPopState);
+        } catch (e) {}
+    }
+
+    function getCurrentVisibleSection() {
+        const sectionMap = {
+            dashboard: 'dashboard-section',
+            transaction: 'transaction-section',
+            inventory: 'inventory-section',
+            reports: 'ledger-section',
+            settings: 'settings-section'
+        };
+        for (const key in sectionMap) {
+            const el = document.getElementById(sectionMap[key]);
+            if (el && el.style.display !== 'none') return key;
+        }
+        return 'dashboard';
+    }
+
+    function getOpenModalId() {
+        const modals = document.querySelectorAll('.modal-overlay');
+        for (const m of modals) {
+            if (m.style.display === 'flex') return m.id;
+        }
+        return null;
+    }
+
+    function handleAppPopState() {
+        if (!document.body.classList.contains('app-logged-in')) return;
+        const openModal = getOpenModalId();
+
+        if (openModal === 'backConfirmModal') {
+            history.pushState({ stocktrackNav: true }, '');
+            return;
+        }
+
+        if (openModal) {
+            closeModal(openModal);
+            history.pushState({ stocktrackNav: true }, '');
+            return;
+        }
+
+        history.pushState({ stocktrackNav: true }, '');
+        const section = getCurrentVisibleSection();
+        if (section !== 'dashboard') {
+            pendingBackAction = 'toDashboard';
+            document.getElementById('backConfirmTitle').innerText = 'Leave this page?';
+            document.getElementById('backConfirmMsg').innerText = 'Go back to the Dashboard?';
+        } else {
+            pendingBackAction = 'exit';
+            document.getElementById('backConfirmTitle').innerText = 'Exit StockTrack?';
+            document.getElementById('backConfirmMsg').innerText = 'Are you sure you want to exit the app?';
+        }
+        document.getElementById('backConfirmModal').style.display = 'flex';
+    }
+
+    function confirmBackAction(confirmed) {
+        document.getElementById('backConfirmModal').style.display = 'none';
+        const action = pendingBackAction;
+        pendingBackAction = null;
+        if (!confirmed) return;
+
+        if (action === 'toDashboard') switchSection('dashboard');
+        else if (action === 'exit') window.close();
+    }
+
+    function csvEscapeField(val) {
+        const s = String(val ?? '');
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+
+    function exportProductsCSV() {
+        if (products.length === 0) return showToast("No products to export", "error");
+        const headers = ['name', 'supplier', 'qty', 'reminder', 'threshold'];
+        const rows = [headers.join(',')];
+        products.forEach(p => {
+            rows.push([p.name, p.supplier || '', p.qty ?? 0, p.reminder || '', p.threshold ?? 2].map(csvEscapeField).join(','));
+        });
+        const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `stock_products_${currentUser?.username || 'guest'}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`Exported ${products.length} product(s) to CSV`);
+    }
+
+    function parseCSVLine(line) {
+        const out = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (inQuotes) {
+                if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+                else if (ch === '"') { inQuotes = false; }
+                else { cur += ch; }
+            } else {
+                if (ch === '"') inQuotes = true;
+                else if (ch === ',') { out.push(cur); cur = ''; }
+                else cur += ch;
+            }
+        }
+        out.push(cur);
+        return out;
+    }
+
+    function handleImportCSVFile(inputEl) {
+        const file = inputEl.files && inputEl.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const text = String(e.target.result || '').replace(/\r/g, '');
+                const lines = text.split('\n').filter(l => l.trim().length > 0);
+                if (lines.length < 2) return showToast("CSV has no data rows", "error");
+
+                const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+                const nameIdx = headers.indexOf('name');
+                if (nameIdx === -1) return showToast("CSV must have a 'name' column", "error");
+                const supplierIdx = headers.indexOf('supplier');
+                const qtyIdx = headers.indexOf('qty');
+                const reminderIdx = headers.indexOf('reminder');
+                const thresholdIdx = headers.indexOf('threshold');
+
+                let added = 0, updated = 0, skipped = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = parseCSVLine(lines[i]);
+                    const name = (cols[nameIdx] || '').trim();
+                    if (!name) { skipped++; continue; }
+                    const supplier = supplierIdx > -1 ? (cols[supplierIdx] || '').trim() : '';
+                    const qty = qtyIdx > -1 ? (parseInt(cols[qtyIdx]) || 0) : 0;
+                    const reminder = reminderIdx > -1 ? (cols[reminderIdx] || '').trim() : '';
+                    const threshold = thresholdIdx > -1 ? (parseInt(cols[thresholdIdx]) || 2) : 2;
+
+                    const existingIdx = products.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+                    if (existingIdx >= 0) {
+                        products[existingIdx] = { name: products[existingIdx].name, supplier, qty, reminder, threshold };
+                        updated++;
+                    } else {
+                        products.push({ name, supplier, qty, reminder, threshold });
+                        added++;
+                    }
+                }
+
+                saveData();
+                showToast(`Import done — ${added} added, ${updated} updated`);
+            } catch (err) {
+                showToast("Could not read CSV file", "error");
+            } finally {
+                inputEl.value = '';
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function exportDataBackup() {
+        if (products.length === 0 && transactions.length === 0) {
+            return showToast("Nothing to back up yet", "error");
+        }
+        const backup = { products, transactions, exportedAt: new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `stock_backup_${currentUser?.username || 'guest'}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Backup downloaded!");
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const prodSelect = document.getElementById('reportProductSelect');
+        if (prodSelect) prodSelect.addEventListener('change', renderActiveReport);
+        const suppSelect = document.getElementById('reportSupplierSelect');
+        if (suppSelect) suppSelect.addEventListener('change', renderActiveReport);
+    });
+
+    prefillRememberedUsername();
+    checkAuthSession();
+</script>
+</body>
+</html>
