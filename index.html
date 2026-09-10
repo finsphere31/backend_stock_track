@@ -3047,6 +3047,18 @@
             window.addEventListener('popstate', handleAppPopState);
         } catch (e) {}
     }
+    // Prevent physical Backspace key from triggering back navigation unless inside an input/textarea
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace') {
+            const target = e.target;
+            const isEditable = target.tagName === 'INPUT' || 
+                               target.tagName === 'TEXTAREA' || 
+                               target.isContentEditable;
+            if (!isEditable) {
+                e.preventDefault();
+            }
+        }
+    });
 
     function getCurrentVisibleSection() {
         const sectionMap = {
@@ -3106,8 +3118,16 @@
         pendingBackAction = null;
         if (!confirmed) return;
 
-        if (action === 'toDashboard') switchSection('dashboard');
-        else if (action === 'exit') window.close();
+        if (action === 'toDashboard') {
+            switchSection('dashboard');
+        } else if (action === 'exit') {
+            // 1. Try closing window (works for installed PWAs / opened tabs)
+            window.close();
+
+            // 2. Fallback for standard browsers: log out and return to the login screen
+            executeConfirmedLogout();
+            showToast("Logged out of StockTrack");
+        }
     }
 
     function csvEscapeField(val) {
